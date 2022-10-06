@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:helloflutter/api.dart' as api;
 
 class LoginWidget extends StatefulWidget {
   @override
@@ -9,8 +9,8 @@ class LoginWidget extends StatefulWidget {
 }
 
 class _LoginWidgetState extends State<LoginWidget> {
-  TextEditingController _usernameCtl = TextEditingController();
-  TextEditingController _passwordCtl = TextEditingController();
+  final TextEditingController _usernameCtl = TextEditingController();
+  final TextEditingController _passwordCtl = TextEditingController();
   bool _isLoading = false;
 
   Widget build(BuildContext context) {
@@ -63,14 +63,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                         ),
                       )
                     : const Icon(Icons.feedback),
-                onPressed: _isLoading ? null : onLogin,
+                onPressed: _isLoading ? null : _onLogin,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
                 ),
                 label: const Text('Log In'),
               )),
           TextButton(
-            onPressed: onForgot,
+            onPressed: _onForgot,
             child: Text(
               'Forgot Password?',
               style: TextStyle(color: Colors.grey[600]),
@@ -81,35 +81,24 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
-  Future<void> onLogin() async {
-    print(_usernameCtl.text);
-    print(_passwordCtl.text);
+  Future<void> _onLogin() async {
     setState(() {
       _isLoading = true;
     });
-    var response = await _postLogin(_usernameCtl.text, _passwordCtl.text);
-    print(response);
-    Map? user = null;
-    if (response.statusCode == 200) {
-      user = jsonDecode(response.body);
-    }
-    if (user != null) {
-      print('login success $user');
-    } else {
-      print('login failed');
-    }
+    var response1 = await api.logout();
+    var response2 = await api.whoami();
+    var response3 = await api.login(_usernameCtl.text, _passwordCtl.text);
+    var response4 = await api.whoami();
+    var response5 = await api.logout();
+    var response6 = await api.whoami();
+    assert(!response2.data['authenticated']);
+    assert(response4.data['user']['id'] is int);
+    assert(!response6.data['authenticated']);
+    print('login deu bom');
     setState(() {
       _isLoading = false;
     });
   }
 
-  void onForgot() {}
-
-  Future<http.Response> _postLogin(String username, String password) {
-    Map body = {'username': username, 'password': password};
-    return http.post(
-      Uri.parse('http://10.0.2.2:8000/api/login'),
-      body: body,
-    );
-  }
+  void _onForgot() {}
 }
