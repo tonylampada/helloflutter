@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class LoginWidget extends StatefulWidget {
   @override
@@ -78,18 +81,35 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
-  void onLogin() {
+  Future<void> onLogin() async {
     print(_usernameCtl.text);
     print(_passwordCtl.text);
     setState(() {
       _isLoading = true;
     });
-    Future.delayed(Duration(seconds: 1), () {
-      setState(() {
-        _isLoading = false;
-      });
+    var response = await _postLogin(_usernameCtl.text, _passwordCtl.text);
+    print(response);
+    Map? user = null;
+    if (response.statusCode == 200) {
+      user = jsonDecode(response.body);
+    }
+    if (user != null) {
+      print('login success $user');
+    } else {
+      print('login failed');
+    }
+    setState(() {
+      _isLoading = false;
     });
   }
 
   void onForgot() {}
+
+  Future<http.Response> _postLogin(String username, String password) {
+    Map body = {'username': username, 'password': password};
+    return http.post(
+      Uri.parse('http://10.0.2.2:8000/api/login'),
+      body: body,
+    );
+  }
 }
